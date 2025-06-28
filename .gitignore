@@ -1,0 +1,2 @@
+# .clasp.json contains secret credentials, do not commit
+.clasp.json
