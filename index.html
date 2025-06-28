@@ -19,69 +19,88 @@
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
+      .button-group {
+        display: flex;
+        gap: 20px; /* ボタン間のスペース */
+      }
       button { 
         padding: 12px 24px; 
         font-size: 18px; 
         cursor: pointer; 
         border: none;
-        background-color: #007bff;
         color: white;
         border-radius: 5px;
         transition: background-color 0.3s;
+        width: 120px; /* ボタンの幅を統一 */
       }
+      #checkinButton { background-color: #28a745; } /* 緑色 */
+      #checkinButton:hover:enabled { background-color: #218838; }
+      #checkoutButton { background-color: #dc3545; } /* 赤色 */
+      #checkoutButton:hover:enabled { background-color: #c82333; }
+
       button:disabled {
         background-color: #cccccc;
         cursor: not-allowed;
       }
-      button:hover:enabled {
-        background-color: #0056b3;
-      }
       #status { 
         margin-top: 20px; 
         font-weight: bold;
-        min-height: 20px; /* メッセージ表示エリアの高さを確保 */
+        min-height: 20px;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>勤怠・活動 記録</h1>
-      <p>下のボタンを押すと、現在の時刻がスプレッドシートに記録されます。</p>
+      <p>下のボタンを押して、入室または退室を記録します。</p>
       
-      <button id="recordButton">記録する</button>
+      <div class="button-group">
+        <button id="checkinButton">入室</button>
+        <button id="checkoutButton">退室</button>
+      </div>
       
       <div id="status"></div>
     </div>
 
     <script>
-      // "recordButton"というIDを持つボタン要素を取得
-      const recordButton = document.getElementById('recordButton');
-      // "status"というIDを持つdiv要素を取得
+      const checkinButton = document.getElementById('checkinButton');
+      const checkoutButton = document.getElementById('checkoutButton');
       const statusDiv = document.getElementById('status');
 
-      // ボタンにクリックイベントを追加
-      recordButton.addEventListener('click', function() {
-        // ボタンを無効化して二重クリックを防止
-        this.disabled = true;
-        statusDiv.textContent = '書き込み中...';
-
-        // サーバーサイドの writeData 関数を呼び出す
-        google.script.run
-          .withSuccessHandler(onSuccess) // 成功したらonSuccess関数を実行
-          .withFailureHandler(onFailure) // 失敗したらonFailure関数を実行
-          .writeData();
+      // 入室ボタンの処理
+      checkinButton.addEventListener('click', function() {
+        recordStatus('入室'); // '入室'という文字列を渡す
       });
 
-      // 書き込み成功時の処理
-      function onSuccess(message) {
-        statusDiv.textContent = '✅ ' + message + ' (' + new Date().toLocaleTimeString() + ')';
-        recordButton.disabled = false; // ボタンを再度有効化
+      // 退室ボタンの処理
+      checkoutButton.addEventListener('click', function() {
+        recordStatus('退室'); // '退室'という文字列を渡す
+      });
+
+      // ステータスを記録する共通の関数
+      function recordStatus(status) {
+        // 両方のボタンを一時的に無効化
+        checkinButton.disabled = true;
+        checkoutButton.disabled = true;
+        statusDiv.textContent = '書き込み中...';
+
+        // サーバーサイドのwriteData関数を呼び出し、引数としてstatusを渡す
+        google.script.run
+          .withSuccessHandler(onSuccess)
+          .withFailureHandler(onFailure)
+          .writeData(status); // ← statusを引数として追加
       }
 
-      // 書き込み失敗時の処理
+      function onSuccess(message) {
+        statusDiv.textContent = '✅ ' + message;
+        checkinButton.disabled = false;
+        checkoutButton.disabled = false;
+      }
+
       function onFailure(error) {
         statusDiv.textContent = '❌ エラー: ' + error.message;
-        recordButton.disabled = false; // ボタンを再度有効化
+        checkinButton.disabled = false;
+        checkoutButton.disabled = false;
       }
     </script>
   </body>

@@ -2,35 +2,30 @@
  * WebアプリとしてアクセスされたときにHTMLページを返す関数
  */
 function doGet(e) {
-  // index.htmlという名前のファイルからHTMLを生成して返す
   return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('勤怠記録アプリ'); // ブラウザのタブに表示されるタイトル
+    .setTitle('勤怠記録アプリ');
 }
 
 /**
  * スプレッドシートにデータを書き込む関数
- * HTML側のJavaScriptから呼び出される
+ * HTML側からステータス（'入室' or '退室'）を受け取る
+ * @param {string} status フロントエンドから渡されるステータス文字列
  * @returns {string} 成功メッセージを返す
  */
-function writeData() {
+function writeData(status) { // ← statusを引数として受け取る
   try {
-    // 操作するスプレッドシートとシートを指定
-    // もしシート名が「シート1」でない場合は、実際のシート名に変更してください。
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('シート1'); 
-    
-    // 記録するデータを準備
+    const userEmail = Session.getActiveUser().getEmail(); 
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('シート1');
     const timestamp = new Date();
-    const memo = 'ボタンがクリックされました';
     
-    // シートの最終行に新しい行を追加して書き込む
-    sheet.appendRow([timestamp, memo]);
+    // appendRowに、引数で受け取ったstatusを書き込む
+    sheet.appendRow([timestamp, status, userEmail]); 
     
-    // 成功したことを伝えるメッセージをHTML側に返す
-    return 'スプレッドシートへの書き込みに成功しました。';
+    // 成功メッセージをHTML側に返す
+    return `「${status}」を記録しました。(${new Date().toLocaleTimeString()})`;
 
   } catch (error) {
-    // もしエラーが起きたら、ログに記録し、エラーメッセージをHTML側に返す
     console.error('書き込みエラー:', error);
-    throw new Error('スプレッドシートへの書き込みに失敗しました。シート名などを確認してください。');
+    throw new Error('スプレッドシートへの書き込みに失敗しました。');
   }
 }
